@@ -1,0 +1,16 @@
+.online-mode .local-only,
+.online-mode [data-action="import"],
+.online-mode [data-action="edit-lesson"],
+.online-mode [data-action="delete-lesson"] {
+  display: none !important;
+}
+.online-mode .top-tools button {
+  white-space: nowrap;
+}
+.online-mode #dicta-key-form [role=status],
+.online-mode .modal-body [role=status] {
+  margin: 12px 0 0;
+}
+@media (max-width: 600px) {
+  .online-mode .top-tools .target { display: none; }
+}

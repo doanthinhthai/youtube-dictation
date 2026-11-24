@@ -1,0 +1,590 @@
+[
+  {
+    "id": "builtin-meeting",
+    "slug": "meeting",
+    "title": "The revised project timeline",
+    "topic": "Văn phòng",
+    "part": "3",
+    "level": "Advanced",
+    "description": "Nắm bắt lịch trình thay đổi, điều kiện và cách diễn đạt gián tiếp.",
+    "kind": "video",
+    "media": "/media/builtin/meeting.mp4",
+    "source": "Bài tự biên soạn · Giọng tổng hợp Microsoft Zira (Mỹ)",
+    "segments": [
+      {
+        "text": "Have you had a chance to look over the revised project timeline?",
+        "translation": "Bạn đã có dịp xem qua tiến độ dự án đã điều chỉnh chưa?",
+        "start": 0.6,
+        "end": 4.859
+      },
+      {
+        "text": "I have, but I'm concerned that the testing phase has been cut short.",
+        "translation": "Tôi xem rồi, nhưng tôi lo giai đoạn kiểm thử đã bị rút ngắn.",
+        "start": 5.509,
+        "end": 10.222
+      },
+      {
+        "text": "The client brought the launch forward by nearly two weeks.",
+        "translation": "Khách hàng đã đẩy ngày ra mắt sớm gần hai tuần.",
+        "start": 10.872,
+        "end": 14.686
+      },
+      {
+        "text": "Unless we bring in additional staff, we won't be able to meet that deadline.",
+        "translation": "Trừ khi bổ sung nhân sự, chúng ta sẽ không thể đáp ứng hạn chót đó.",
+        "start": 15.336,
+        "end": 20.444
+      },
+      {
+        "text": "I'll raise the issue with the department head this afternoon.",
+        "translation": "Chiều nay tôi sẽ nêu vấn đề với trưởng bộ phận.",
+        "start": 21.094,
+        "end": 24.818
+      },
+      {
+        "text": "In the meantime, could you put together an estimate of the resources we'll need?",
+        "translation": "Trong lúc đó, bạn có thể lập dự toán nguồn lực chúng ta cần không?",
+        "start": 25.468,
+        "end": 30.362
+      }
+    ],
+    "duration": 31.0
+  },
+  {
+    "id": "builtin-airport",
+    "slug": "airport",
+    "title": "A last-minute gate change",
+    "topic": "Du lịch",
+    "part": "4",
+    "level": "Advanced",
+    "description": "Thông báo sân bay, số hiệu chuyến bay và các chi tiết dễ bỏ lỡ.",
+    "kind": "video",
+    "media": "/media/builtin/airport.mp4",
+    "source": "Bài tự biên soạn · Giọng tổng hợp Microsoft Zira (Mỹ)",
+    "segments": [
+      {
+        "text": "May I have your attention, please? This is an announcement for passengers traveling to Seattle.",
+        "translation": "Xin quý khách chú ý. Đây là thông báo dành cho hành khách đến Seattle.",
+        "start": 0.6,
+        "end": 7.518
+      },
+      {
+        "text": "Flight four eighteen will now depart from gate twenty-three instead of gate fourteen.",
+        "translation": "Chuyến bay 418 sẽ khởi hành ở cửa 23 thay vì cửa 14.",
+        "start": 8.168,
+        "end": 13.327
+      },
+      {
+        "text": "The departure time remains unchanged, and boarding will begin in approximately fifteen minutes.",
+        "translation": "Giờ khởi hành không thay đổi; việc lên máy bay bắt đầu sau khoảng 15 phút.",
+        "start": 13.977,
+        "end": 20.15
+      },
+      {
+        "text": "Passengers requiring assistance should speak to a member of our ground crew.",
+        "translation": "Hành khách cần hỗ trợ vui lòng gặp nhân viên mặt đất.",
+        "start": 20.8,
+        "end": 25.519
+      },
+      {
+        "text": "We apologize for any inconvenience and appreciate your cooperation.",
+        "translation": "Chúng tôi xin lỗi vì sự bất tiện và cảm ơn sự hợp tác của quý khách.",
+        "start": 26.169,
+        "end": 30.817
+      }
+    ],
+    "duration": 31.5
+  },
+  {
+    "id": "builtin-hiring",
+    "slug": "hiring",
+    "title": "Finding the right candidate",
+    "topic": "Tuyển dụng",
+    "part": "3",
+    "level": "Advanced",
+    "description": "Nghe ý kiến, ưu tiên và quyết định trong phỏng vấn.",
+    "kind": "video",
+    "media": "/media/builtin/hiring.mp4",
+    "source": "Bài tự biên soạn · Giọng tổng hợp Microsoft Zira (Mỹ)",
+    "segments": [
+      {
+        "text": "Of the applicants we interviewed, who do you think would be the best fit?",
+        "translation": "Trong số các ứng viên đã phỏng vấn, bạn nghĩ ai phù hợp nhất?",
+        "start": 0.6,
+        "end": 5.263
+      },
+      {
+        "text": "Ms. Chen has considerable experience, although her availability could be an issue.",
+        "translation": "Cô Chen có kinh nghiệm đáng kể, dù thời điểm có thể đi làm là một vấn đề.",
+        "start": 5.913,
+        "end": 11.317
+      },
+      {
+        "text": "She mentioned that she'd need to give her current employer a month's notice.",
+        "translation": "Cô ấy nói cần báo trước cho công ty hiện tại một tháng.",
+        "start": 11.967,
+        "end": 16.405
+      },
+      {
+        "text": "Given how urgent the vacancy is, we might have to consider someone else.",
+        "translation": "Vì vị trí cần tuyển gấp, chúng ta có thể phải cân nhắc người khác.",
+        "start": 17.055,
+        "end": 22.129
+      },
+      {
+        "text": "Why don't we ask whether she could start on a part-time basis?",
+        "translation": "Hay chúng ta hỏi liệu cô ấy có thể bắt đầu theo hình thức bán thời gian không?",
+        "start": 22.779,
+        "end": 26.978
+      },
+      {
+        "text": "That's worth exploring. I'll get in touch with her before the end of the day.",
+        "translation": "Đáng để tìm hiểu đấy. Tôi sẽ liên hệ cô ấy trước cuối ngày.",
+        "start": 27.628,
+        "end": 32.896
+      }
+    ],
+    "duration": 33.5
+  },
+  {
+    "id": "builtin-hotel",
+    "slug": "hotel",
+    "title": "A reservation mix-up",
+    "topic": "Khách sạn",
+    "part": "3",
+    "level": "Advanced",
+    "description": "Xử lý nhầm đặt phòng và đề nghị thay thế.",
+    "kind": "video",
+    "media": "/media/builtin/hotel.mp4",
+    "source": "Bài tự biên soạn · Giọng tổng hợp Microsoft Zira (Mỹ)",
+    "segments": [
+      {
+        "text": "I booked a room overlooking the harbor, but the one I've been assigned faces the parking lot.",
+        "translation": "Tôi đặt phòng nhìn ra cảng, nhưng phòng được xếp lại nhìn ra bãi xe.",
+        "start": 0.6,
+        "end": 6.303
+      },
+      {
+        "text": "I'm terribly sorry. Let me check whether a suitable room is available.",
+        "translation": "Tôi rất xin lỗi. Để tôi kiểm tra xem còn phòng phù hợp không.",
+        "start": 6.953,
+        "end": 12.197
+      },
+      {
+        "text": "We're fully booked tonight, but I can offer you a complimentary upgrade tomorrow.",
+        "translation": "Tối nay chúng tôi đã kín phòng, nhưng ngày mai tôi có thể nâng hạng miễn phí.",
+        "start": 12.847,
+        "end": 18.115
+      },
+      {
+        "text": "Would that mean I'd have to pack up and change rooms in the morning?",
+        "translation": "Như vậy sáng mai tôi phải thu dọn và chuyển phòng đúng không?",
+        "start": 18.765,
+        "end": 22.594
+      },
+      {
+        "text": "Our staff would be happy to transfer your luggage while you're out.",
+        "translation": "Nhân viên sẽ sẵn lòng chuyển hành lý khi quý khách ra ngoài.",
+        "start": 23.244,
+        "end": 27.398
+      },
+      {
+        "text": "In that case, I'd appreciate a late checkout on my final day as well.",
+        "translation": "Nếu vậy, tôi cũng mong được trả phòng muộn vào ngày cuối.",
+        "start": 28.048,
+        "end": 33.106
+      }
+    ],
+    "duration": 33.8
+  },
+  {
+    "id": "builtin-shipping",
+    "slug": "shipping",
+    "title": "An unexpected delivery delay",
+    "topic": "Vận chuyển",
+    "part": "2",
+    "level": "Advanced",
+    "description": "Hỏi đáp gián tiếp, nguyên nhân và phương án xử lý.",
+    "kind": "video",
+    "media": "/media/builtin/shipping.mp4",
+    "source": "Bài tự biên soạn · Giọng tổng hợp Microsoft Zira (Mỹ)",
+    "segments": [
+      {
+        "text": "Has the shipment of replacement parts arrived yet?",
+        "translation": "Lô linh kiện thay thế đã đến chưa?",
+        "start": 0.6,
+        "end": 4.204
+      },
+      {
+        "text": "According to the tracking information, it's being held at customs.",
+        "translation": "Theo thông tin theo dõi, lô hàng đang bị giữ ở hải quan.",
+        "start": 4.854,
+        "end": 9.447
+      },
+      {
+        "text": "Shouldn't we notify the maintenance team about the delay?",
+        "translation": "Chúng ta nên báo cho đội bảo trì về sự chậm trễ chứ?",
+        "start": 10.097,
+        "end": 13.596
+      },
+      {
+        "text": "I've already left a message with their supervisor.",
+        "translation": "Tôi đã để lại lời nhắn cho người giám sát của họ.",
+        "start": 14.246,
+        "end": 17.56
+      },
+      {
+        "text": "Who should I contact to arrange an alternative delivery?",
+        "translation": "Tôi nên liên hệ ai để sắp xếp phương án giao hàng thay thế?",
+        "start": 18.21,
+        "end": 21.889
+      },
+      {
+        "text": "The supplier's details are on the purchase order.",
+        "translation": "Thông tin nhà cung cấp có trên đơn đặt hàng.",
+        "start": 22.539,
+        "end": 25.887
+      }
+    ],
+    "duration": 26.5
+  },
+  {
+    "id": "builtin-conference",
+    "slug": "conference",
+    "title": "Welcome to the annual conference",
+    "topic": "Hội nghị",
+    "part": "4",
+    "level": "Advanced",
+    "description": "Bài phát biểu mở đầu và thay đổi chương trình.",
+    "kind": "video",
+    "media": "/media/builtin/conference.mp4",
+    "source": "Bài tự biên soạn · Giọng tổng hợp Microsoft Zira (Mỹ)",
+    "segments": [
+      {
+        "text": "On behalf of the organizing committee, I'd like to welcome you to our annual conference.",
+        "translation": "Thay mặt ban tổ chức, tôi xin chào mừng quý vị đến hội nghị thường niên.",
+        "start": 0.6,
+        "end": 6.199
+      },
+      {
+        "text": "Before we begin, there are a couple of changes to today's program.",
+        "translation": "Trước khi bắt đầu, có một vài thay đổi trong chương trình hôm nay.",
+        "start": 6.849,
+        "end": 11.502
+      },
+      {
+        "text": "Due to a scheduling conflict, the keynote presentation has been moved to the afternoon.",
+        "translation": "Do trùng lịch, bài phát biểu chính đã được chuyển sang buổi chiều.",
+        "start": 12.152,
+        "end": 17.821
+      },
+      {
+        "text": "The workshop on sustainable packaging will take place in this room at ten thirty.",
+        "translation": "Hội thảo về bao bì bền vững diễn ra tại phòng này lúc 10 giờ 30.",
+        "start": 18.471,
+        "end": 23.454
+      },
+      {
+        "text": "If you haven't already done so, please collect your name badge from the registration desk.",
+        "translation": "Nếu chưa nhận, vui lòng lấy thẻ tên ở bàn đăng ký.",
+        "start": 24.104,
+        "end": 29.928
+      },
+      {
+        "text": "Refreshments will be served in the courtyard throughout the morning.",
+        "translation": "Đồ ăn nhẹ được phục vụ ở sân trong suốt buổi sáng.",
+        "start": 30.578,
+        "end": 34.441
+      }
+    ],
+    "duration": 35.1
+  },
+  {
+    "id": "builtin-renovation",
+    "slug": "renovation",
+    "title": "A new chapter for the library",
+    "topic": "Cơ sở vật chất",
+    "part": "4",
+    "level": "Advanced",
+    "description": "Thông báo đóng cửa, dịch vụ thay thế và mốc thời gian.",
+    "kind": "video",
+    "media": "/media/builtin/renovation.mp4",
+    "source": "Bài tự biên soạn · Giọng tổng hợp Microsoft Zira (Mỹ)",
+    "segments": [
+      {
+        "text": "The Westfield Public Library will be closed for renovations beginning next Monday.",
+        "translation": "Thư viện công cộng Westfield sẽ đóng cửa sửa chữa từ thứ Hai tới.",
+        "start": 0.6,
+        "end": 5.818
+      },
+      {
+        "text": "The improvements include expanded study areas and a fully accessible entrance.",
+        "translation": "Việc cải tạo bao gồm khu tự học mở rộng và lối vào thuận tiện cho mọi người.",
+        "start": 6.468,
+        "end": 11.592
+      },
+      {
+        "text": "During the closure, borrowed items can be returned to any branch in the county.",
+        "translation": "Trong thời gian đóng cửa, có thể trả tài liệu tại bất kỳ chi nhánh nào trong hạt.",
+        "start": 12.242,
+        "end": 17.385
+      },
+      {
+        "text": "All existing due dates have been extended by three weeks.",
+        "translation": "Tất cả hạn trả hiện tại đã được gia hạn thêm ba tuần.",
+        "start": 18.035,
+        "end": 21.824
+      },
+      {
+        "text": "Our digital collection will remain available through the library's website.",
+        "translation": "Bộ sưu tập số vẫn có trên trang web thư viện.",
+        "start": 22.474,
+        "end": 26.987
+      },
+      {
+        "text": "We look forward to welcoming you back when we reopen in early September.",
+        "translation": "Chúng tôi mong đón quý vị trở lại khi mở cửa vào đầu tháng Chín.",
+        "start": 27.637,
+        "end": 32.181
+      }
+    ],
+    "duration": 32.8
+  },
+  {
+    "id": "builtin-restaurant",
+    "slug": "restaurant",
+    "title": "A table for the team",
+    "topic": "Nhà hàng",
+    "part": "2",
+    "level": "Intermediate",
+    "description": "Đặt bàn và các câu hỏi thường gặp trong dịch vụ.",
+    "kind": "video",
+    "media": "/media/builtin/restaurant.mp4",
+    "source": "Bài tự biên soạn · Giọng tổng hợp Microsoft Zira (Mỹ)",
+    "segments": [
+      {
+        "text": "Would it be possible to reserve a private dining room for Friday evening?",
+        "translation": "Có thể đặt phòng ăn riêng vào tối thứ Sáu không?",
+        "start": 0.6,
+        "end": 5.069
+      },
+      {
+        "text": "Certainly. How many guests are you expecting?",
+        "translation": "Được ạ. Quý khách dự kiến bao nhiêu người?",
+        "start": 5.719,
+        "end": 9.802
+      },
+      {
+        "text": "There will be twelve of us, including two people with dietary restrictions.",
+        "translation": "Có 12 người, trong đó hai người có chế độ ăn hạn chế.",
+        "start": 10.452,
+        "end": 15.681
+      },
+      {
+        "text": "Our chef can prepare a special menu if you let us know in advance.",
+        "translation": "Đầu bếp có thể chuẩn bị thực đơn riêng nếu quý khách báo trước.",
+        "start": 16.331,
+        "end": 20.73
+      },
+      {
+        "text": "Is there a minimum charge for booking the room?",
+        "translation": "Đặt phòng có mức phí tối thiểu không?",
+        "start": 21.38,
+        "end": 24.309
+      },
+      {
+        "text": "That depends on the menu you choose.",
+        "translation": "Điều đó phụ thuộc vào thực đơn quý khách chọn.",
+        "start": 24.959,
+        "end": 27.673
+      }
+    ],
+    "duration": 28.3
+  },
+  {
+    "id": "builtin-budget",
+    "slug": "budget",
+    "title": "Making the numbers work",
+    "topic": "Tài chính",
+    "part": "3",
+    "level": "Advanced",
+    "description": "Dự toán, khoản chi và điều kiện phê duyệt.",
+    "kind": "video",
+    "media": "/media/builtin/budget.mp4",
+    "source": "Bài tự biên soạn · Giọng tổng hợp Microsoft Zira (Mỹ)",
+    "segments": [
+      {
+        "text": "I've gone through your proposal, and the overall approach looks promising.",
+        "translation": "Tôi đã xem đề xuất của bạn, và hướng tiếp cận tổng thể có triển vọng.",
+        "start": 0.6,
+        "end": 5.414
+      },
+      {
+        "text": "However, the projected expenditure exceeds our quarterly budget by a substantial amount.",
+        "translation": "Tuy nhiên, chi phí dự kiến vượt ngân sách quý khá nhiều.",
+        "start": 6.064,
+        "end": 12.047
+      },
+      {
+        "text": "Most of the additional cost is associated with upgrading the existing equipment.",
+        "translation": "Phần lớn chi phí bổ sung liên quan đến nâng cấp thiết bị hiện tại.",
+        "start": 12.697,
+        "end": 17.615
+      },
+      {
+        "text": "Could we spread those purchases over the next two quarters?",
+        "translation": "Chúng ta có thể chia việc mua sắm đó sang hai quý tới không?",
+        "start": 18.265,
+        "end": 22.109
+      },
+      {
+        "text": "Provided that the supplier agrees to hold the current price, that should be feasible.",
+        "translation": "Nếu nhà cung cấp đồng ý giữ giá hiện tại thì khả thi.",
+        "start": 22.759,
+        "end": 28.097
+      },
+      {
+        "text": "Let's revise the figures before submitting the proposal for approval.",
+        "translation": "Hãy điều chỉnh số liệu trước khi trình đề xuất để phê duyệt.",
+        "start": 28.747,
+        "end": 33.01
+      }
+    ],
+    "duration": 33.7
+  },
+  {
+    "id": "builtin-retail",
+    "slug": "retail",
+    "title": "More than just a refund",
+    "topic": "Mua sắm",
+    "part": "3",
+    "level": "Advanced",
+    "description": "Khiếu nại, chính sách hoàn trả và điều kiện bảo hành.",
+    "kind": "video",
+    "media": "/media/builtin/retail.mp4",
+    "source": "Bài tự biên soạn · Giọng tổng hợp Microsoft Zira (Mỹ)",
+    "segments": [
+      {
+        "text": "I purchased these headphones last week, and the left speaker has already stopped working.",
+        "translation": "Tôi mua tai nghe tuần trước, và loa bên trái đã ngừng hoạt động.",
+        "start": 0.6,
+        "end": 6.373
+      },
+      {
+        "text": "Do you happen to have the receipt or the original packaging with you?",
+        "translation": "Bạn có mang hóa đơn hoặc bao bì gốc không?",
+        "start": 7.023,
+        "end": 11.112
+      },
+      {
+        "text": "I've got the digital receipt on my phone, but I threw the box away.",
+        "translation": "Tôi có hóa đơn điện tử trên điện thoại, nhưng đã bỏ hộp.",
+        "start": 11.762,
+        "end": 16.441
+      },
+      {
+        "text": "That's perfectly fine. We can offer a replacement or a full refund.",
+        "translation": "Không sao cả. Chúng tôi có thể đổi sản phẩm hoặc hoàn tiền đầy đủ.",
+        "start": 17.091,
+        "end": 22.579
+      },
+      {
+        "text": "I'd rather exchange them for a different model, if that's possible.",
+        "translation": "Nếu được, tôi muốn đổi sang mẫu khác.",
+        "start": 23.229,
+        "end": 27.658
+      },
+      {
+        "text": "Of course. You'll just need to pay the difference in price.",
+        "translation": "Tất nhiên. Bạn chỉ cần trả phần chênh lệch giá.",
+        "start": 28.308,
+        "end": 32.871
+      }
+    ],
+    "duration": 33.5
+  },
+  {
+    "id": "builtin-office",
+    "slug": "office",
+    "title": "Around the shared workspace",
+    "topic": "Văn phòng",
+    "part": "1",
+    "level": "Intermediate",
+    "description": "Chép các câu mô tả đồ vật và hoạt động ở văn phòng.",
+    "kind": "video",
+    "media": "/media/builtin/office.mp4",
+    "source": "Bài tự biên soạn · Giọng tổng hợp Microsoft Zira (Mỹ)",
+    "segments": [
+      {
+        "text": "Several chairs have been arranged around a conference table.",
+        "translation": "Một số ghế đã được xếp quanh bàn hội nghị.",
+        "start": 0.6,
+        "end": 4.479
+      },
+      {
+        "text": "A laptop is positioned next to a stack of documents.",
+        "translation": "Một máy tính xách tay được đặt cạnh chồng tài liệu.",
+        "start": 5.129,
+        "end": 9.042
+      },
+      {
+        "text": "The blinds have been partially lowered to block the sunlight.",
+        "translation": "Rèm đã được hạ một phần để chắn ánh nắng.",
+        "start": 9.692,
+        "end": 13.521
+      },
+      {
+        "text": "Some shelves along the wall are being used to store supplies.",
+        "translation": "Một số kệ dọc tường đang được dùng để chứa vật tư.",
+        "start": 14.171,
+        "end": 18.26
+      }
+    ],
+    "duration": 18.9
+  },
+  {
+    "id": "builtin-advertising",
+    "slug": "advertising",
+    "title": "Introducing a greener commute",
+    "topic": "Quảng cáo",
+    "part": "4",
+    "level": "Advanced",
+    "description": "Quảng cáo dịch vụ và lời kêu gọi hành động.",
+    "kind": "video",
+    "media": "/media/builtin/advertising.mp4",
+    "source": "Bài tự biên soạn · Giọng tổng hợp Microsoft Zira (Mỹ)",
+    "segments": [
+      {
+        "text": "Looking for a convenient way to get around the city without the traffic?",
+        "translation": "Bạn đang tìm cách di chuyển tiện lợi trong thành phố mà không bị kẹt xe?",
+        "start": 0.6,
+        "end": 4.824
+      },
+      {
+        "text": "GreenRide's new monthly membership gives you unlimited access to our network of shared bicycles.",
+        "translation": "Gói thành viên tháng mới của GreenRide cho phép dùng không giới hạn mạng lưới xe đạp chung.",
+        "start": 5.474,
+        "end": 11.472
+      },
+      {
+        "text": "Simply download the app, locate the nearest station, and you're ready to go.",
+        "translation": "Chỉ cần tải ứng dụng, tìm trạm gần nhất là bạn có thể lên đường.",
+        "start": 12.122,
+        "end": 17.65
+      },
+      {
+        "text": "Sign up before the end of the month to receive a twenty percent discount on your first payment.",
+        "translation": "Đăng ký trước cuối tháng để được giảm 20% cho lần thanh toán đầu tiên.",
+        "start": 18.3,
+        "end": 23.879
+      },
+      {
+        "text": "Visit our website for full details, including station locations and membership conditions.",
+        "translation": "Truy cập trang web để xem đầy đủ vị trí trạm và điều kiện thành viên.",
+        "start": 24.529,
+        "end": 30.937
+      }
+    ],
+    "duration": 31.6
+  }
+]
