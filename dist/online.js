@@ -1,103 +1,25 @@
 import { projectUrl, publishableKey } from './config.js';
 import { escapeHTML } from './core.js';
+import { connectAccount } from './account.js';
 
-const validKey = value => /^sb_publishable_[A-Za-z0-9_-]+$/.test(value);
-const keySlot = 'dicta:publishable:' + projectUrl;
 const browserState = 'dicta:online:guest';
 const app = document.querySelector('#app');
-let key = [publishableKey, localStorage.getItem(keySlot)].find(validKey);
-let client, session, connectionError = '';
-const samples = fetch('/builtin.json').then(r => {
-  if (!r.ok) throw new Error('Không tải được thư viện bài mẫu.');
-  return r.json();
-});
+const auth = await connectAccount(projectUrl, publishableKey);
+const { client, key } = auth;
+let session = auth.session;
+auth.onSession = next => { session = next; };
 
-if (key) {
-  try {
-    const { default: sdk } = await import('./vendor/supabase.js');
-    client = sdk.createClient(projectUrl, key, {
-      auth: { detectSessionInUrl: false },
-    });
-    const { data, error } = await client.auth.getSession();
-    if (error) throw error;
-    session = data.session;
-    client.auth.onAuthStateChange((event, next) => {
-      if (event === 'TOKEN_REFRESHED' && next?.user.id === session?.user.id) session = next;
-      else if (event === 'SIGNED_OUT' && session) location.reload();
-    });
-  } catch {
-    connectionError = 'Chưa kết nối được Supabase. Bạn vẫn có thể luyện bài mẫu trên thiết bị này.';
-  }
-}
+const samples = fetch('/builtin.json').then(response => {
+  if (!response.ok) throw new Error('Không tải được thư viện bài mẫu.');
+  return response.json();
+});
 
 function accountPanel() {
   if (session) {
-    return `<section class="panel panel-pad"><h3>Tài khoản và đồng bộ</h3><p class="small muted">Đã đăng nhập với <b>${escapeHTML(session.user.email || 'tài khoản Dicta')}</b>. Tiến độ và bài cá nhân gắn với tài khoản của bạn.</p><button class="btn secondary" data-action="online-account">Quản lý tài khoản</button></section>`;
+    const displayName = escapeHTML(auth.username || session.user.email || 'tài khoản Dicta');
+    return '<section class="panel panel-pad"><h3>Tài khoản và đồng bộ</h3><p class="small muted">Đã đăng nhập với <b>' + displayName + '</b>. Tiến độ và bài cá nhân gắn với tài khoản của bạn.</p><button class="btn secondary" data-action="online-account">Quản lý tài khoản</button></section>';
   }
   return '<section class="panel panel-pad"><h3>Tài khoản và đồng bộ</h3><p class="small muted">Đăng nhập để mở bài cá nhân và đồng bộ tiến độ. Tiến độ khi luyện mẫu được lưu trên thiết bị này.</p><button class="btn primary" data-action="online-account">Đăng nhập</button></section>';
-}
-
-function dialog(title, body) {
-  const modal = document.querySelector('#modal');
-  modal.innerHTML = `<div class="modal-head"><h2>${title}</h2><button class="icon-btn" data-action="close-modal" aria-label="Đóng">×</button></div><div class="modal-body">${body}</div>`;
-  if (!modal.open) modal.showModal();
-  return modal;
-}
-
-function showAccount() {
-  if (session) {
-    const modal = dialog('Tài khoản Dicta', `<p>${escapeHTML(session.user.email || '')}</p><button class="btn secondary" id="dicta-signout">Đăng xuất</button><p class="small muted" role="status"></p>`);
-    modal.querySelector('#dicta-signout').addEventListener('click', async ({ currentTarget }) => {
-      currentTarget.disabled = true;
-      const { error } = await client.auth.signOut({ scope: 'local' });
-      if (!error) location.reload();
-      else {
-        modal.querySelector('[role=status]').textContent = 'Chưa đăng xuất được. Kiểm tra kết nối rồi thử lại.';
-        currentTarget.disabled = false;
-      }
-    });
-    return;
-  }
-  if (!client) {
-    const modal = dialog('Kết nối Supabase', `<p class="small muted">Dùng khóa công khai của project Dicta. Bạn tìm thấy khóa ở mục <b>Settings → API Keys → Publishable key</b> trong Supabase.</p><form id="dicta-key-form"><div class="field"><label for="dicta-public-key">Publishable key</label><input id="dicta-public-key" required autocomplete="off" placeholder="sb_publishable_…"></div><button class="btn primary">Kết nối</button><p class="small muted" role="status">${escapeHTML(connectionError)}</p></form>`);
-    modal.querySelector('form').addEventListener('submit', event => {
-      event.preventDefault();
-      const value = modal.querySelector('input').value.trim();
-      if (!validKey(value)) {
-        modal.querySelector('[role=status]').textContent = 'Cần Publishable key bắt đầu bằng sb_publishable_.';
-        return;
-      }
-      localStorage.setItem(keySlot, value);
-      sessionStorage.setItem('dicta:open-signin','yes');
-      location.reload();
-    });
-    return;
-  }
-  const modal = dialog('Đăng nhập Dicta', '<form><div class="field"><label for="dicta-email">Email</label><input required id="dicta-email" type="email" autocomplete="username"></div><div class="field"><label for="dicta-password">Mật khẩu</label><input required id="dicta-password" type="password" autocomplete="current-password"></div><button class="btn primary">Đăng nhập</button><p class="small muted" role="status"></p></form>'+(publishableKey?'':'<button class="text-btn" id="dicta-reset-key">Đổi khóa kết nối</button>'));
-  modal.querySelector('#dicta-reset-key')?.addEventListener('click', () => {
-    localStorage.removeItem(keySlot);
-    sessionStorage.setItem('dicta:open-signin','yes');
-    location.reload();
-  });
-  const form = modal.querySelector('form');
-  form.addEventListener('submit', async event => {
-    event.preventDefault();
-    const button = form.querySelector('button');
-    const message = form.querySelector('[role=status]');
-    button.disabled = true;
-    message.textContent = 'Đang đăng nhập…';
-    try {
-      const { error } = await client.auth.signInWithPassword({
-        email: form.querySelector('#dicta-email').value.trim(),
-        password: form.querySelector('#dicta-password').value,
-      });
-      if (error) throw error;
-      location.reload();
-    } catch {
-      message.textContent = 'Đăng nhập chưa thành công. Kiểm tra email, mật khẩu và kết nối Supabase.';
-      button.disabled = false;
-    }
-  });
 }
 
 const lessonCache = new Map();
@@ -194,13 +116,10 @@ function flushState(value) {
 }
 
 globalThis.dictaOnline = {
-  api, accountPanel, showAccount, prepareMedia, flushState,
+  api, accountPanel, showAccount: () => auth.show(), prepareMedia, flushState,
   accountLabel: session ? 'Tài khoản' : 'Đăng nhập',
   storageLabel: session ? 'Online · Đã đăng nhập' : 'Online · Luyện bài mẫu',
 };
 app.classList.add('online-mode');
 await import('./app.js');
-if (sessionStorage.getItem('dicta:open-signin')) {
-  sessionStorage.removeItem('dicta:open-signin');
-  showAccount();
-}
+auth.finishCallback();

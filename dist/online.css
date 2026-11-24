@@ -11,6 +11,19 @@
 .online-mode .modal-body [role=status] {
   margin: 12px 0 0;
 }
+.dicta-google { width: 100%; justify-content: center; }
+.dicta-auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #587069;
+  margin: 15px 0;
+  font-size: .875rem;
+}
+.dicta-auth-divider::before,
+.dicta-auth-divider::after { content: ""; flex: 1; height: 1px; background: #dfe8e2; }
+.dicta-auth-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+.dicta-auth-back { margin-top: 12px; }
 @media (max-width: 600px) {
   .online-mode .top-tools .target { display: none; }
 }
