@@ -22,7 +22,11 @@ export function diffProgress(before, after, { now = Date.now, id = () => crypto.
       const draft = select(answer, answerFields);
       if (own(previous, 'range') && !own(answer, 'range')) draft.range = null;
       const checked = select(answer, gradeFields);
-      if (!same(draft, select(previous, answerFields))) put('answer', [lesson, cue], draft, answer.editedAt ?? answer.gradedAt ?? now());
+      if (!same(draft, select(previous, answerFields))) {
+        const stamp = answer.editedAt ?? answer.gradedAt ?? 0;
+        const oldStamp = previous.editedAt ?? previous.gradedAt ?? 0;
+        put('answer', [lesson, cue], draft, stamp > oldStamp ? stamp : Math.max(now(), oldStamp + 1));
+      }
       if (checked.checks && (!previous.checks || checked.gradedAt !== previous.gradedAt)) {
         put('grade', [lesson, cue], checked, checked.gradedAt || 1);
       }
@@ -87,7 +91,7 @@ export function applyProgress(snapshot, changes, { includeCounters = true } = {}
   return state;
 }
 
-export function createProgressQueue(storage) {
+export function createProgressQueue(storage, slot = crypto.randomUUID()) {
   const prefix = accountId => 'dicta:progress:' + encodeURIComponent(accountId) + ':';
   const keyFor = (accountId, id) => prefix(accountId) + id;
 
@@ -113,7 +117,21 @@ export function createProgressQueue(storage) {
     return [...new Map(items.map(item => [item.id, item])).values()].sort(compareChanges);
   };
   const recordChanges = (accountId, changes) => {
-    if (changes.length) storage.setItem(keyFor(accountId, changes[0].id), JSON.stringify(changes));
+    const remaining = [];
+    for (const change of changes) {
+      if (change.kind === 'answer' || change.kind === 'grade') {
+        // Only this tab replaces its own drafts. Other tabs retain their entries until acknowledgement.
+        const key = keyFor(accountId, slot + ':' + change.kind + ':' + JSON.stringify(change.key));
+        let previous;
+        try { previous = JSON.parse(storage.getItem(key) || '[]')[0]; } catch { /* replace a corrupt draft */ }
+        if (!previous || compareChanges(previous, change) <= 0) {
+          const compacted = previous && change.kind === 'answer'
+            ? { ...change, value: { ...previous.value, ...change.value } } : change;
+          storage.setItem(key, JSON.stringify([compacted]));
+        }
+      } else remaining.push(change);
+    }
+    if (remaining.length) storage.setItem(keyFor(accountId, remaining[0].id), JSON.stringify(remaining));
   };
 
   function takeBatch(queue) {

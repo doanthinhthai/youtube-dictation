@@ -46,7 +46,7 @@ async function readJSON(request) {
   if (!request.body || !/^application\/json(?:\s*;|$)/i.test(request.headers.get('Content-Type') || '')) {
     throw invalid('Thiếu dữ liệu bài luyện.');
   }
-  const limit = 524288;
+  const limit = 1048576;
   const reader = request.body.getReader();
   const decoder = new TextDecoder();
   let output = '';
@@ -205,9 +205,16 @@ async function upload(request, env, args) {
     cancel.abort();
     await piping.catch(() => {});
     try {
-      await removeObject(env, audioPath);
-      await rpc(env, 'abort_upload', leased);
-    } catch { /* keep the reservation until the object can be recovered or cleaned */ }
+      return reply(await rpc(env, 'finish_upload', leased));
+    } catch {
+      try {
+        const cleanup = await rpc(env, 'claim_failed_upload', leased);
+        if (cleanup.audioPath) {
+          await removeObject(env, cleanup.audioPath);
+          await rpc(env, 'finish_delete', args);
+        }
+      } catch { /* leave the reservation for reconciliation on the next visit */ }
+    }
     throw error;
   }
   return reply(await rpc(env, 'finish_upload', leased));
@@ -238,6 +245,14 @@ export async function handleLessons(request, env, url) {
     if (id && !identifier.test(id)) throw new LessonError(404, 'Không tìm thấy bài.');
     const owner = await getActor(request, env);
     const args = { p_user: owner, p_id: id };
+    if (request.method === 'POST' && path.length === 1 && id === 'recover') {
+      const targets = await rpc(env, 'reconcile_uploads', { p_user: owner });
+      for (const target of targets) {
+        await removeObject(env, target.audioPath);
+        await rpc(env, 'finish_delete', { p_user: owner, p_id: target.id });
+      }
+      return reply({ ok: true });
+    }
     if (request.method === 'POST' && !path.length) return await create(request, env, owner);
     if (request.method === 'PUT' && path.length === 2 && path[1] === 'audio') {
       return await upload(request, env, args);

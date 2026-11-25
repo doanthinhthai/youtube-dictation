@@ -144,7 +144,7 @@ begin
           then raise exception 'Invalid position' using errcode='22023'; end if;
         lesson := lesson || jsonb_build_object('index',value);
       else
-        if jsonb_typeof(value) <> 'object' or octet_length(value::text) > 200000 then
+        if jsonb_typeof(value) <> 'object' or octet_length(value::text) > 500000 then
           raise exception 'Invalid answer' using errcode='22023';
         end if;
         answer := coalesce(lesson#>array['answers',second_key],'{"text":"","checks":0,"hints":0,"revealed":false}');

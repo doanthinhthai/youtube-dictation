@@ -107,6 +107,44 @@ test('incorrect upload size releases its reservation and never writes audio', as
   assert.equal(seen.length, 2);
 });
 
+test('a lost upload response never deletes audio that Storage already committed', async t => {
+  let verified = false;
+  supabase(t, async (route, init) => {
+    if (route.endsWith('dicta_online_begin_upload')) return Response.json({ audioPath: path, bytes: 4, lease });
+    if (route.startsWith('/storage/v1/object/') && init.method === 'POST') {
+      await new Response(init.body).arrayBuffer();
+      return new Response(null, { status: 503 });
+    }
+    if (route.endsWith('dicta_online_finish_upload')) {
+      verified = true;
+      return Response.json({ id, pending: false });
+    }
+    throw new Error('Unexpected call ' + route);
+  });
+  assert.equal((await worker.fetch(upload([73, 68, 51, 0]), env)).status, 200);
+  assert.equal(verified, true);
+});
+
+test('a 30 MB request reaches the Storage boundary with every reserved byte', async t => {
+  const bytes = 30000000;
+  let forwarded = 0;
+  supabase(t, async (route, init) => {
+    if (route.endsWith('dicta_online_begin_upload')) return Response.json({ audioPath: path, bytes, lease });
+    if (route.startsWith('/storage/v1/object/')) {
+      for await (const chunk of init.body) forwarded += chunk.byteLength;
+      return Response.json({ Key: path });
+    }
+    if (route.endsWith('dicta_online_finish_upload')) return Response.json({ id, pending: false });
+    throw new Error('Unexpected call ' + route);
+  });
+  const request = new Request(origin + '/api/lessons/' + id + '/audio', {
+    method: 'PUT', body: new Uint8Array(bytes), headers: { 'Content-Type': 'audio/mpeg',
+      'Content-Length': String(bytes), Authorization: 'Bearer owner-token' },
+  });
+  assert.equal((await worker.fetch(request, env)).status, 200);
+  assert.equal(forwarded, bytes);
+});
+
 test('deletion identifies the actor from the session and does not delete another account audio', async t => {
   let checked = false;
   supabase(t, (route, init) => {

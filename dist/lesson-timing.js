@@ -22,7 +22,7 @@ export function showTimingEditor(dialog, { lesson, mountYouTube, save, onSaved }
   const rows = lesson.segments.map((cue, i) => '<div class="timing-row" data-timing><p><b>Câu ' + (i + 1) + '</b> ' +
     e(cue.text) + '</p><div class="row wrap">' + mark('Đầu', cue.start, 'start') + mark('Cuối', cue.end, 'end') + '</div></div>');
   dialog.innerHTML = '<div class="modal-head"><h2>Đánh dấu mốc từng câu</h2><button class="icon-btn" type="button" ' +
-    'data-action="close-modal" aria-label="Đóng">×</button></div><form class="modal-body timing-editor">' + source +
+    'data-action="close-modal" aria-label="Đóng">×</button></div><form class="modal-body timing-editor" novalidate>' + source +
     '<p class="small muted">Phát audio hoặc video, rồi lấy vị trí đang nghe cho đầu và cuối mỗi câu.</p>' +
     '<div class="timing-list">' + rows.join('') + '</div><p role="status" aria-live="polite"></p>' +
     '<button class="btn primary" type="submit">Lưu mốc</button></form>';

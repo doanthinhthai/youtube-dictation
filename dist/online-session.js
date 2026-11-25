@@ -1,7 +1,7 @@
 import { applyProgress, createProgressQueue, diffProgress } from './progress-sync.js';
 
 const guestKey = 'dicta:online:guest';
-const importKey = 'dicta:online:guest-import';
+const importKey = owner => 'dicta:online:guest-import:' + owner;
 
 function json(storage, key, fallback) {
   try { return JSON.parse(storage.getItem(key)) ?? fallback; }
@@ -10,7 +10,10 @@ function json(storage, key, fallback) {
 
 export function createOnlineSession({ tabStorage, accountStorage, getAccountId,
   readSamples, readPrivateLessons, readRemoteState, sendChanges }) {
-  const queue = createProgressQueue(accountStorage);
+  const slotKey = 'dicta:online:tab';
+  const slot = tabStorage.getItem(slotKey) || crypto.randomUUID();
+  tabStorage.setItem(slotKey, slot);
+  const queue = createProgressQueue(accountStorage, slot);
   const cacheKey = accountId => 'dicta:online:cache:' + accountId;
   let ownerId = getAccountId();
   let baseline = {};
@@ -25,15 +28,15 @@ export function createOnlineSession({ tabStorage, accountStorage, getAccountId,
     try { accountStorage.setItem(cacheKey(owner), JSON.stringify(state)); } catch { /* the queue is the durable write */ }
   }
 
-  function hasGuestProgress() {
+  function hasGuestDraft() {
     const guest = json(tabStorage, guestKey, {});
     return Object.keys(guest.progress ?? {}).length > 0 || Object.keys(guest.days ?? {}).length > 0;
   }
 
   return {
-    hasGuestProgress,
+    hasGuestProgress() { return hasGuestDraft() || !!(ownerId && tabStorage.getItem(importKey(ownerId))); },
     shouldOfferGuestImport() {
-      return !!ownerId && hasGuestProgress() && !tabStorage.getItem(importKey) &&
+      return !!ownerId && hasGuestDraft() && !tabStorage.getItem(importKey(ownerId)) &&
         !tabStorage.getItem(guestKey + ':declined:' + ownerId);
     },
     declineGuestImport() {
@@ -43,7 +46,7 @@ export function createOnlineSession({ tabStorage, accountStorage, getAccountId,
       baseline = structuredClone(state);
     },
     hasPending() {
-      return !!ownerId && queue.pending(ownerId).length > 0;
+      return !!ownerId && (queue.pending(ownerId).length > 0 || !!tabStorage.getItem(importKey(ownerId)));
     },
     async loadOnlineSession() {
       const owner = getAccountId();
@@ -78,8 +81,8 @@ export function createOnlineSession({ tabStorage, accountStorage, getAccountId,
       if (inFlight) return inFlight;
       inFlight = (async () => {
         try {
-          const importing = json(tabStorage, importKey, null);
-          if (importing?.owner === owner && !queue.pending(owner).length) {
+          const importing = json(tabStorage, importKey(owner), null);
+          if (importing) {
             queue.recordChanges(owner, importing.changes);
           }
           const flushed = await queue.flushProgress(owner, async changes => {
@@ -87,9 +90,8 @@ export function createOnlineSession({ tabStorage, accountStorage, getAccountId,
             const result = await sendChanges(changes, owner);
             return getAccountId() === owner ? result : [];
           });
-          if (flushed && importing?.owner === owner && getAccountId() === owner) {
-            tabStorage.removeItem(guestKey);
-            tabStorage.removeItem(importKey);
+          if (flushed && importing && getAccountId() === owner) {
+            tabStorage.removeItem(importKey(owner));
           }
           return flushed;
         } catch {
@@ -101,15 +103,14 @@ export function createOnlineSession({ tabStorage, accountStorage, getAccountId,
     },
     async importGuestProgress() {
       if (inFlight) await inFlight;
-      if (!ownerId || getAccountId() !== ownerId || !hasGuestProgress()) return false;
-      let importing = json(tabStorage, importKey, null);
-      if (importing && importing.owner !== ownerId) return false;
+      if (!ownerId || getAccountId() !== ownerId || !this.hasGuestProgress()) return false;
+      let importing = json(tabStorage, importKey(ownerId), null);
       if (!importing) {
         const { progress, days } = json(tabStorage, guestKey, {});
-        importing = { owner: ownerId, changes: diffProgress({}, { progress, days }) };
-        tabStorage.setItem(importKey, JSON.stringify(importing));
+        importing = { changes: diffProgress({}, { progress, days }) };
+        tabStorage.setItem(importKey(ownerId), JSON.stringify(importing));
+        tabStorage.removeItem(guestKey);
       }
-      queue.recordChanges(ownerId, importing.changes);
       return this.flushProgress();
     },
   };

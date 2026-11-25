@@ -153,6 +153,55 @@ begin
 end;
 $fn$;
 
+create or replace function public.dicta_online_claim_failed_upload(p_user uuid,p_id text,p_lease uuid)
+returns jsonb language plpgsql security invoker set search_path='' as $fn$
+declare target text; reserved_bytes bigint;
+begin
+  perform pg_advisory_xact_lock(73910429);
+  select l.audio_path,r.bytes into target,reserved_bytes from public.dicta_online_lessons l
+    join public.dicta_online_audio_reservations r on l.audio_path=r.audio_path
+    where l.user_id=p_user and l.lesson_id=p_id and l.upload_pending and not l.deleting
+      and r.lease=p_lease and r.lease_until>clock_timestamp();
+  if not found or exists(select 1 from storage.objects o where o.bucket_id='dicta-online-audio'
+      and o.name=target and (o.metadata->>'size')::bigint=reserved_bytes) then return '{}'::jsonb; end if;
+  update public.dicta_online_lessons set deleting=true where user_id=p_user and lesson_id=p_id;
+  return jsonb_build_object('id',p_id,'audioPath',target);
+end;
+$fn$;
+
+create or replace function public.dicta_online_reconcile_uploads(p_user uuid)
+returns jsonb language plpgsql security invoker set search_path='' as $fn$
+declare targets jsonb;
+begin
+  perform pg_advisory_xact_lock(73910429);
+  with completed as (
+    update public.dicta_online_lessons l set upload_pending=false
+    from public.dicta_online_audio_reservations r, storage.objects o
+    where l.user_id=p_user and l.upload_pending and not l.deleting and r.audio_path=l.audio_path
+      and o.bucket_id='dicta-online-audio' and o.name=r.audio_path and (o.metadata->>'size')::bigint=r.bytes
+    returning l.audio_path
+  )
+  delete from public.dicta_online_audio_reservations r using completed c where r.audio_path=c.audio_path;
+
+  with expired as (
+    select l.lesson_id from public.dicta_online_lessons l
+    join public.dicta_online_audio_reservations r on l.audio_path=r.audio_path
+    where l.user_id=p_user and l.upload_pending and not l.deleting
+      and r.expires_at<clock_timestamp() and (r.lease_until is null or r.lease_until<clock_timestamp())
+    order by l.lesson_id limit 8
+  )
+  update public.dicta_online_lessons l set deleting=true from expired e
+    where l.user_id=p_user and l.lesson_id=e.lesson_id;
+
+  select coalesce(jsonb_agg(jsonb_build_object('id',row_data.lesson_id,'audioPath',row_data.audio_path)),'[]')
+    into targets from (
+      select l.lesson_id,l.audio_path from public.dicta_online_lessons l
+      where l.user_id=p_user and l.upload_pending and l.deleting order by l.lesson_id limit 8
+    ) row_data;
+  return targets;
+end;
+$fn$;
+
 create or replace function public.dicta_online_update_timing(p_user uuid,p_id text,p_timing jsonb)
 returns jsonb language plpgsql security invoker set search_path='' as $fn$
 declare row_data public.dicta_online_lessons; next_segments jsonb := '[]'; mark jsonb;
@@ -219,11 +268,13 @@ $fn$;
 revoke all on function public.dicta_online_create_lesson(uuid,text,jsonb,bigint,text,bigint),
   public.dicta_online_begin_upload(uuid,text), public.dicta_online_finish_upload(uuid,text,uuid),
   public.dicta_online_abort_upload(uuid,text,uuid), public.dicta_online_update_timing(uuid,text,jsonb),
-  public.dicta_online_begin_delete(uuid,text), public.dicta_online_finish_delete(uuid,text)
+  public.dicta_online_begin_delete(uuid,text), public.dicta_online_finish_delete(uuid,text),
+  public.dicta_online_claim_failed_upload(uuid,text,uuid), public.dicta_online_reconcile_uploads(uuid)
   from public,anon,authenticated;
 grant execute on function public.dicta_online_create_lesson(uuid,text,jsonb,bigint,text,bigint),
   public.dicta_online_begin_upload(uuid,text), public.dicta_online_finish_upload(uuid,text,uuid),
   public.dicta_online_abort_upload(uuid,text,uuid), public.dicta_online_update_timing(uuid,text,jsonb),
-  public.dicta_online_begin_delete(uuid,text), public.dicta_online_finish_delete(uuid,text)
+  public.dicta_online_begin_delete(uuid,text), public.dicta_online_finish_delete(uuid,text),
+  public.dicta_online_claim_failed_upload(uuid,text,uuid), public.dicta_online_reconcile_uploads(uuid)
   to service_role;
 commit;

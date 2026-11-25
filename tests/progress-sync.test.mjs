@@ -53,6 +53,17 @@ test('editing or clearing a listening range leaves the last checked grade intact
   assert.equal(applyProgress(previous, changes).progress.office.answers[0].checkedText, 'office');
 });
 
+test('range edits with an older draft timestamp receive the time of the new edit', () => {
+  const previous = { progress: { office: { answers: { 0: {
+    text: 'office', editedAt: 100, range: { start: 1, end: 3 },
+  } } } } };
+  const next = structuredClone(previous);
+  delete next.progress.office.answers[0].range;
+  assert.equal(diffProgress(previous, next, { now: () => 400 })[0].at, 400);
+  assert.equal(diffProgress({}, previous, { now: () => 400 })
+    .find(change => change.kind === 'answer').at, 100, 'guest import preserves the original time');
+});
+
 test('progress queue keeps failed and unacknowledged changes isolated by account', async () => {
   const stored = new Map();
   const storage = { get length() { return stored.size; }, key: i => [...stored.keys()][i],
@@ -81,4 +92,18 @@ test('restarting a lesson clears only that lesson and leaves other scores alone'
   assert.deepEqual(changes.map(({ kind, key }) => [kind, key]), [['clearLesson', ['office']]]);
   assert.equal(applyProgress(before, changes).progress.office, undefined);
   assert.equal(applyProgress(before, changes).progress.another.answers[0].score, 80);
+});
+
+test('offline typing compacts one large draft without dropping other progress', () => {
+  const stored = new Map();
+  const storage = { get length() { return stored.size; }, key: i => [...stored.keys()][i],
+    setItem: (key, value) => stored.set(key, value), getItem: key => stored.get(key), removeItem: key => stored.delete(key) };
+  const queue = createProgressQueue(storage);
+  queue.recordChange('me', grade('one', '1', 100, 'unchanged', 100));
+  for (let step = 1; step <= 100; step++) {
+    queue.recordChange('me', { id: 'edit' + step, at: step, kind: 'answer', key: ['office', 'whole'],
+      value: { text: 'a'.repeat(step * 200) } });
+  }
+  assert.deepEqual(queue.pending('me').map(change => change.id).sort(), ['edit100', 'one']);
+  assert.ok([...stored.values()].reduce((total, value) => total + value.length, 0) < 25000);
 });

@@ -28,6 +28,7 @@ function accountPanel() {
 }
 
 const lessonCache = new Map();
+let recovering;
 function requireData(response) {
   if (response.error) {
     const error = new Error('Chưa đồng bộ được dữ liệu.');
@@ -38,6 +39,9 @@ function requireData(response) {
 }
 
 async function readPrivateLessons(owner) {
+    recovering ??= privateRequest('/api/lessons/recover', 'POST', undefined, 'application/json', AbortSignal.timeout(4000))
+      .catch(() => { recovering = null; });
+    await recovering;
     const own = [];
     const limit = 100;
     for (let offset = 0; ; offset += limit) {
@@ -111,11 +115,11 @@ function recordState(state, delay = 1500) {
   retryTimer = setTimeout(flush, delay);
 }
 
-async function privateRequest(route, method, body, mime = 'application/json') {
+async function privateRequest(route, method, body, mime = 'application/json', signal) {
   if (!session) throw new Error('Hãy đăng nhập để thêm hoặc quản lý bài riêng.');
   const owner = session.user.id;
   const result = await fetch(route, {
-    method, body, headers: { Authorization: 'Bearer ' + session.access_token, 'Content-Type': mime },
+    method, body, signal, headers: { Authorization: 'Bearer ' + session.access_token, 'Content-Type': mime },
   });
   const data = await result.json().catch(() => ({}));
   if (!result.ok) throw new Error(data.error || 'Chưa xử lý được bài luyện.');

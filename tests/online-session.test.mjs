@@ -87,3 +87,27 @@ test('a previous account cannot acknowledge or send changes after the session sw
   assert.equal(await f.session.flushProgress(), true);
   assert.deepEqual(sent, ['a']);
 });
+
+test('acknowledging a guest import cannot erase guest practice started after sign-out', async () => {
+  let online = false;
+  const f = fixture({ sendChanges: async changes => {
+    if (!online) throw new Error('offline');
+    return changes.map(change => change.id);
+  } });
+  f.setAccount(null);
+  const firstGuest = createOnlineSession(f.options);
+  firstGuest.recordState(grade);
+  f.setAccount('a');
+  assert.equal(await createOnlineSession(f.options).importGuestProgress(), false);
+  f.setAccount(null);
+  const newGuest = createOnlineSession(f.options);
+  const later = { progress: { later: { index: 0, answers: { 0: {
+    text: 'later', checkedText: 'later', score: 100, checks: 1, gradedAt: 200,
+  } } } } };
+  newGuest.recordState(later);
+  f.setAccount('a');
+  online = true;
+  assert.equal(await createOnlineSession(f.options).flushProgress(), true);
+  f.setAccount(null);
+  assert.deepEqual((await createOnlineSession(f.options).loadOnlineSession()).state, later);
+});

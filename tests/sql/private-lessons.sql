@@ -69,8 +69,12 @@ declare
   finished jsonb;
   shared_path text;
 begin
-  finished := public.dicta_online_begin_upload(owner,'audio-id');
+  perform public.dicta_online_reconcile_uploads(owner);
+  select jsonb_build_object('pending',upload_pending) into finished from public.dicta_online_lessons
+    where user_id=owner and lesson_id='audio-id';
   if finished->>'pending' <> 'false' then raise exception 'An already stored object should safely resume'; end if;
+  if public.dicta_online_claim_failed_upload(owner,'audio-id',gen_random_uuid())->>'audioPath' is not null
+  then raise exception 'Cleanup must not remove published audio'; end if;
   select audio_path into shared_path from public.dicta_online_lessons where user_id=owner and lesson_id='audio-id';
   perform public.dicta_online_import(owner,'{}',jsonb_build_array(jsonb_build_object(
     'lesson_id','audio-copy','lesson','{"segments":[]}'::jsonb,'audio_path',shared_path)));
