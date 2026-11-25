@@ -39,6 +39,20 @@ test('snapshot changes describe only changed fields and listening deltas', () =>
   ]);
 });
 
+test('editing or clearing a listening range leaves the last checked grade intact', () => {
+  const previous = { progress: { office: { answers: { 0: {
+    text: 'office', checkedText: 'office', score: 100, checks: 1, gradedAt: 300, range: { start: 1, end: 3 },
+  } } } } };
+  const next = structuredClone(previous);
+  const answer = next.progress.office.answers[0];
+  answer.text = 'draft';
+  answer.checkedText = null;
+  delete answer.range;
+  const changes = diffProgress(previous, next);
+  assert.deepEqual(changes.map(({ kind, value }) => [kind, value]), [['answer', { text: 'draft', range: null }]]);
+  assert.equal(applyProgress(previous, changes).progress.office.answers[0].checkedText, 'office');
+});
+
 test('progress queue keeps failed and unacknowledged changes isolated by account', async () => {
   const stored = new Map();
   const storage = { get length() { return stored.size; }, key: i => [...stored.keys()][i],
@@ -54,4 +68,17 @@ test('progress queue keeps failed and unacknowledged changes isolated by account
   });
   assert.deepEqual(createProgressQueue(storage).pending('a').map(change => change.id), ['two']);
   assert.deepEqual(queue.pending('b').map(change => change.id), ['three']);
+});
+
+test('restarting a lesson clears only that lesson and leaves other scores alone', () => {
+  const before = applyProgress({}, [
+    grade('one', '0', 100, 'hello', 100),
+    { ...grade('two', '0', 150, 'other', 80), key: ['another', '0'] },
+  ]);
+  const after = structuredClone(before);
+  delete after.progress.office;
+  const changes = diffProgress(before, after, { now: () => 200 });
+  assert.deepEqual(changes.map(({ kind, key }) => [kind, key]), [['clearLesson', ['office']]]);
+  assert.equal(applyProgress(before, changes).progress.office, undefined);
+  assert.equal(applyProgress(before, changes).progress.another.answers[0].score, 80);
 });

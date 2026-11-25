@@ -46,6 +46,7 @@ declare
   first_key text;
   second_key text;
   clock_key text;
+  clear_key text;
   lesson jsonb;
   answer jsonb;
   day jsonb;
@@ -73,7 +74,7 @@ begin
     if change_id is null or changed_at is null or changed_at < 1
        or changed_at > extract(epoch from clock_timestamp())*1000+86400000
        or jsonb_typeof(keys) is distinct from 'array' or value is null
-       or kind is null or kind not in ('position','grade','answer','day','word','setting','lastLesson')
+       or kind is null or kind not in ('position','grade','answer','clearLesson','day','word','setting','lastLesson')
        or jsonb_array_length(keys) <> (case when kind in ('grade','answer') then 2 when kind='lastLesson' then 0 else 1 end)
        or (kind <> 'lastLesson' and (first_key is null or first_key !~ '^[a-zA-Z0-9_-]{1,100}$'
            or first_key in ('__proto__','prototype','constructor')))
@@ -104,10 +105,14 @@ begin
     end if;
 
     clock_key := kind || ':' || keys::text;
+    clear_key := 'clearLesson:' || jsonb_build_array(first_key)::text;
     if (coalesce((clocks#>>array[clock_key,'at'])::bigint,0),
         coalesce(clocks#>>array[clock_key,'id'],'')) >= (changed_at,change_id::text) then
       continue;
     end if;
+    if kind in ('grade','answer','position') and
+      (coalesce((clocks#>>array[clear_key,'at'])::bigint,0),
+       coalesce(clocks#>>array[clear_key,'id'],'')) >= (changed_at,change_id::text) then continue; end if;
 
     case kind
     when 'setting' then
@@ -116,6 +121,13 @@ begin
     when 'lastLesson' then
       if jsonb_typeof(value) <> 'string' then raise exception 'Invalid lesson' using errcode='22023'; end if;
       state := state || jsonb_build_object('lastLesson',value);
+    when 'clearLesson' then
+      if exists (select 1 from jsonb_each(clocks) as clock(field, stamp)
+        where case when split_part(clock.field,':',1) in ('grade','answer','position')
+          then substring(clock.field from position(':' in clock.field)+1)::jsonb->>0
+          else null end = first_key
+        and ((clock.stamp->>'at')::bigint,clock.stamp->>'id') > (changed_at,change_id::text)) then continue; end if;
+      state := state || jsonb_build_object('progress',coalesce(state->'progress','{}') - first_key);
     when 'word' then
       if value <> 'null'::jsonb and (jsonb_typeof(value) <> 'object' or value->>'id' is distinct from first_key) then
         raise exception 'Invalid vocabulary entry' using errcode='22023';
@@ -132,7 +144,7 @@ begin
           then raise exception 'Invalid position' using errcode='22023'; end if;
         lesson := lesson || jsonb_build_object('index',value);
       else
-        if jsonb_typeof(value) <> 'object' or octet_length(value::text) > 100000 then
+        if jsonb_typeof(value) <> 'object' or octet_length(value::text) > 200000 then
           raise exception 'Invalid answer' using errcode='22023';
         end if;
         answer := coalesce(lesson#>array['answers',second_key],'{"text":"","checks":0,"hints":0,"revealed":false}');

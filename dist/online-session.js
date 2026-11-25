@@ -15,6 +15,11 @@ export function createOnlineSession({ tabStorage, accountStorage, getAccountId,
   let ownerId = getAccountId();
   let baseline = {};
   let inFlight = null;
+  const legacyGuest = json(accountStorage, guestKey, null);
+  if (legacyGuest) {
+    if (!tabStorage.getItem(guestKey)) tabStorage.setItem(guestKey, JSON.stringify(legacyGuest));
+    accountStorage.removeItem(guestKey);
+  }
 
   function cache(owner, state) {
     try { accountStorage.setItem(cacheKey(owner), JSON.stringify(state)); } catch { /* the queue is the durable write */ }
@@ -59,7 +64,7 @@ export function createOnlineSession({ tabStorage, accountStorage, getAccountId,
     recordState(state) {
       if (getAccountId() !== ownerId) return false;
       if (ownerId) {
-        for (const change of diffProgress(baseline, state)) queue.recordChange(ownerId, change);
+        queue.recordChanges(ownerId, diffProgress(baseline, state));
         cache(ownerId, state);
       } else {
         tabStorage.setItem(guestKey, JSON.stringify(state));
@@ -75,7 +80,7 @@ export function createOnlineSession({ tabStorage, accountStorage, getAccountId,
         try {
           const importing = json(tabStorage, importKey, null);
           if (importing?.owner === owner && !queue.pending(owner).length) {
-            for (const change of importing.changes) queue.recordChange(owner, change);
+            queue.recordChanges(owner, importing.changes);
           }
           const flushed = await queue.flushProgress(owner, async changes => {
             if (getAccountId() !== owner) return [];
@@ -95,6 +100,7 @@ export function createOnlineSession({ tabStorage, accountStorage, getAccountId,
       finally { inFlight = null; }
     },
     async importGuestProgress() {
+      if (inFlight) await inFlight;
       if (!ownerId || getAccountId() !== ownerId || !hasGuestProgress()) return false;
       let importing = json(tabStorage, importKey, null);
       if (importing && importing.owner !== ownerId) return false;
@@ -103,7 +109,7 @@ export function createOnlineSession({ tabStorage, accountStorage, getAccountId,
         importing = { owner: ownerId, changes: diffProgress({}, { progress, days }) };
         tabStorage.setItem(importKey, JSON.stringify(importing));
       }
-      for (const change of importing.changes) queue.recordChange(ownerId, change);
+      queue.recordChanges(ownerId, importing.changes);
       return this.flushProgress();
     },
   };

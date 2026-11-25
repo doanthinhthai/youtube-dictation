@@ -33,6 +33,19 @@ begin
     or (saved#>>'{days,2026-11-25,seconds}') is distinct from '31'
     or (saved#>>'{settings,goal}') is distinct from '20'
   then raise exception 'The merged state lost or duplicated data'; end if;
+  perform public.dicta_online_apply_progress('[
+    {"id":"9ec20000-0000-4000-8000-000000000011","at":225,"kind":"clearLesson","key":["office"],"value":null}
+  ]');
+  select value into saved from public.dicta_online_state;
+  if (saved#>>'{progress,office,answers,0,score}') is distinct from '100'
+  then raise exception 'A stale reset wiped later practice'; end if;
+  perform public.dicta_online_apply_progress('[
+    {"id":"9ec20000-0000-4000-8000-000000000012","at":500,"kind":"clearLesson","key":["office"],"value":null},
+    {"id":"9ec20000-0000-4000-8000-000000000013","at":490,"kind":"grade","key":["office","0"],"value":{"score":60}}
+  ]');
+  select value into saved from public.dicta_online_state;
+  if saved#>'{progress,office}' is not null or saved#>'{progress,legacy}' is null
+  then raise exception 'Restarting one lesson cleared the wrong scores or allowed old progress to return'; end if;
   begin
     perform public.dicta_online_save_state('{}', 251);
     raise exception 'Legacy clients must not overwrite the migrated state';

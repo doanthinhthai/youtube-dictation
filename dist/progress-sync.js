@@ -9,6 +9,9 @@ const safeKey = key => typeof key === 'string' && !['__proto__', 'constructor', 
 export function diffProgress(before, after, { now = Date.now, id = () => crypto.randomUUID() } = {}) {
   const changes = [];
   const put = (kind, key, value, at = now()) => changes.push({ kind, key, value, at, id: id() });
+  for (const lesson of Object.keys(before.progress ?? {})) {
+    if (!own(after.progress, lesson)) put('clearLesson', [lesson], null);
+  }
   for (const lesson of Object.keys(after.progress ?? {})) {
     const old = before.progress?.[lesson] ?? {};
     const next = after.progress[lesson];
@@ -17,6 +20,7 @@ export function diffProgress(before, after, { now = Date.now, id = () => crypto.
       const answer = next.answers[cue];
       const previous = old.answers?.[cue] ?? {};
       const draft = select(answer, answerFields);
+      if (own(previous, 'range') && !own(answer, 'range')) draft.range = null;
       const checked = select(answer, gradeFields);
       if (!same(draft, select(previous, answerFields))) put('answer', [lesson, cue], draft, answer.editedAt ?? answer.gradedAt ?? now());
       if (checked.checks && (!previous.checks || checked.gradedAt !== previous.gradedAt)) {
@@ -65,6 +69,9 @@ export function applyProgress(snapshot, changes, { includeCounters = true } = {}
       const day = (state.days ??= {})[first] ??= {};
       day.seconds = (day.seconds ?? 0) + value.seconds;
       day.checks = (day.checks ?? 0) + value.checks;
+    } else if (kind === 'clearLesson') {
+      const answers = Object.values(state.progress?.[first]?.answers ?? {});
+      if (state.progress && !answers.some(answer => (answer.gradedAt || 0) > at)) delete state.progress[first];
     } else if (kind === 'position' || kind === 'grade' || kind === 'answer') {
       const lesson = (state.progress ??= {})[first] ??= { index: 0, answers: {} };
       if (kind === 'position') lesson.index = value;
@@ -84,33 +91,58 @@ export function createProgressQueue(storage) {
   const prefix = accountId => 'dicta:progress:' + encodeURIComponent(accountId) + ':';
   const keyFor = (accountId, id) => prefix(accountId) + id;
 
-  function pending(accountId) {
+  function records(accountId) {
     const result = [];
     for (let i = 0; i < storage.length; i++) {
       const key = storage.key(i);
       if (!key?.startsWith(prefix(accountId))) continue;
       try {
-        const change = JSON.parse(storage.getItem(key));
-        if (change?.id && Array.isArray(change.key)) result.push(change);
+        const stored = JSON.parse(storage.getItem(key));
+        const changes = (Array.isArray(stored) ? stored : [stored])
+          .filter(change => change?.id && Array.isArray(change.key));
+        if (changes.length) result.push({ key, changes });
       } catch {
         // One corrupt record must not suppress another queued change.
       }
     }
-    return result.sort(compareChanges);
+    return result;
+  }
+
+  const pending = accountId => {
+    const items = records(accountId).flatMap(record => record.changes);
+    return [...new Map(items.map(item => [item.id, item])).values()].sort(compareChanges);
+  };
+  const recordChanges = (accountId, changes) => {
+    if (changes.length) storage.setItem(keyFor(accountId, changes[0].id), JSON.stringify(changes));
+  };
+
+  function takeBatch(queue) {
+    let size = 0;
+    let count = 0;
+    const encoder = new TextEncoder();
+    while (count < Math.min(25, queue.length)) {
+      const bytes = encoder.encode(JSON.stringify(queue[count])).byteLength;
+      if (count > 0 && size + bytes > 900000) break;
+      size += bytes;
+      count++;
+    }
+    return queue.splice(0, count);
   }
 
   return {
-    pending,
+    pending, recordChanges,
     recordChange(accountId, change) {
-      storage.setItem(keyFor(accountId, change.id), JSON.stringify(change));
+      recordChanges(accountId, [change]);
     },
     async flushProgress(accountId, send) {
       const queue = pending(accountId);
       while (queue.length) {
-        const batch = queue.splice(0, 25);
+        const batch = takeBatch(queue);
         const acknowledged = new Set(await send(batch));
-        for (const change of batch) {
-          if (acknowledged.has(change.id)) storage.removeItem(keyFor(accountId, change.id));
+        for (const record of records(accountId)) {
+          const remaining = record.changes.filter(change => !acknowledged.has(change.id));
+          if (!remaining.length) storage.removeItem(record.key);
+          else if (remaining.length < record.changes.length) storage.setItem(record.key, JSON.stringify(remaining));
         }
         if (batch.some(change => !acknowledged.has(change.id))) return false;
       }
