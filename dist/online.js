@@ -2,6 +2,11 @@ import { projectUrl, publishableKey } from './config.js';
 import { escapeHTML } from './core.js';
 import { connectAccount } from './account.js';
 import { createOnlineSession } from './online-session.js';
+import { isWholeLesson } from './lesson-input.js';
+import { showLessonForm } from './lesson-form.js';
+import { showTimingEditor } from './lesson-timing.js';
+import { createYouTubeMedia } from './youtube-player.js';
+import { scoreWholeInBackground } from './whole-score.js';
 
 const app = document.querySelector('#app');
 const auth = await connectAccount(projectUrl, publishableKey);
@@ -37,13 +42,14 @@ async function readPrivateLessons(owner) {
     const limit = 100;
     for (let offset = 0; ; offset += limit) {
       const rows = requireData(await client.from('dicta_online_lessons')
-        .select('lesson_id,lesson,audio_path').eq('user_id', owner)
+        .select('lesson_id,lesson,audio_path,deleting').eq('user_id', owner)
         .order('lesson_id').range(offset, offset + limit - 1).abortSignal(AbortSignal.timeout(7000)));
       for (const row of rows) {
         if (!row.lesson?.segments?.length) continue;
         const part = ['1','2','3','4'].includes(String(row.lesson.part)) ? String(row.lesson.part) : '3';
         const youtubeId = /^[\w-]{11}$/.test(row.lesson.youtubeId || '') ? row.lesson.youtubeId : undefined;
-        own.push({ ...row.lesson, id: row.lesson_id, part, youtubeId, media: '', kind: row.audio_path ? 'audio' : row.lesson.kind, custom: true });
+        own.push({ ...row.lesson, id: row.lesson_id, part, youtubeId, media: '', deleting: row.deleting,
+          kind: row.audio_path ? 'audio' : row.lesson.kind, custom: true });
         lessonCache.set(row.lesson_id, row.audio_path || row.lesson.media);
       }
       if (rows.length < limit) break;
@@ -105,15 +111,57 @@ function recordState(state, delay = 1500) {
   retryTimer = setTimeout(flush, delay);
 }
 
-async function api(route) {
+async function privateRequest(route, method, body, mime = 'application/json') {
+  if (!session) throw new Error('Hãy đăng nhập để thêm hoặc quản lý bài riêng.');
+  const owner = session.user.id;
+  const result = await fetch(route, {
+    method, body, headers: { Authorization: 'Bearer ' + session.access_token, 'Content-Type': mime },
+  });
+  const data = await result.json().catch(() => ({}));
+  if (!result.ok) throw new Error(data.error || 'Chưa xử lý được bài luyện.');
+  if (session?.user.id !== owner) throw new Error('Phiên đăng nhập vừa thay đổi.');
+  return data;
+}
+
+async function createPrivateLesson(draft, file) {
+  const result = await privateRequest('/api/lessons', 'POST', JSON.stringify(draft));
+  if (result.pending && file) {
+    await privateRequest('/api/lessons/' + encodeURIComponent(draft.id) + '/audio', 'PUT', file, draft.audio.mime);
+  }
+  return { id: draft.id };
+}
+
+async function api(route, { method = 'GET', body } = {}) {
   if (route === '/api/status') return { online: true, ai: false, translation: false, models: {} };
   if (route === '/api/storage') return { mode: session ? 'supabase' : 'browser' };
   if (route === '/api/library') return session ? [...await samples, ...await readPrivateLessons(session.user.id)] : samples;
-  throw new Error('Tạo và sửa bài nghe trong Dicta trên PC.');
+  if (route.startsWith('/api/lessons/') && ['DELETE', 'PATCH'].includes(method)) {
+    return privateRequest(route, method, body);
+  }
+  throw new Error('Thao tác này không có trong bản online.');
 }
 
 const audioCache = new Map();
+function mountYouTube(target, videoId) {
+  const container = target.parentElement;
+  const media = createYouTubeMedia(target, videoId);
+  media.addEventListener('error', () => {
+    let notice = container.querySelector('.youtube-error');
+    if (!notice) {
+      notice = document.createElement('p');
+      notice.className = 'notice youtube-error';
+      notice.setAttribute('role', 'status');
+      container.append(notice);
+    }
+    notice.textContent = media.error?.message || 'Chưa phát được video YouTube.';
+  });
+  media.addEventListener('play', () => container.querySelector('.youtube-error')?.remove());
+  return media;
+}
+
 async function prepareMedia(lesson) {
+  if (lesson.deleting) throw new Error('Bài đang chờ xóa. Hãy thử xóa lại từ thư viện.');
+  if (lesson.kind === 'youtube') return '';
   const path = lesson.custom ? lessonCache.get(lesson.id) : (lesson.originalMedia ??= lesson.media);
   if (typeof path !== 'string') throw new Error('Bài chưa có audio trên web.');
   const old = audioCache.get(path);
@@ -126,7 +174,7 @@ async function prepareMedia(lesson) {
     url = URL.createObjectURL(await response.blob());
   } else {
     const ownerPrefix = session?.user.id + '/';
-    if (!session || !path.startsWith(ownerPrefix) || !/^[\w-]+\/[a-f0-9]{64}\.m4a$/.test(path)) {
+    if (!session || !path.startsWith(ownerPrefix) || !/^[\w-]+\/[a-f0-9]{64}\.(m4a|mp3)$/.test(path)) {
       throw new Error('Audio riêng tư chưa sẵn sàng cho tài khoản này.');
     }
     const seconds = 3600;
@@ -140,6 +188,18 @@ async function prepareMedia(lesson) {
 
 globalThis.dictaOnline = {
   api, accountPanel, showAccount: () => auth.show(), prepareMedia, recordState, bannerHTML,
+  isWholeLesson,
+  scoreWhole: scoreWholeInBackground,
+  mountYouTube,
+  showTimingEditor(dialog, lesson, onSaved) {
+    showTimingEditor(dialog, { lesson, onSaved, mountYouTube, save: timing =>
+      api('/api/lessons/' + encodeURIComponent(lesson.id), { method: 'PATCH', body: JSON.stringify({ timing }) }),
+    });
+  },
+  showLessonForm(dialog, onSaved) {
+    if (!session) return auth.show();
+    showLessonForm(dialog, { save: createPrivateLesson, onSaved });
+  },
   setBaseline: account.setBaseline,
   async loadOnlineSession() {
     const data = await account.loadOnlineSession();

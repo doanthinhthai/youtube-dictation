@@ -1,4 +1,4 @@
 /*
-  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://fejklynoerubxjohijyy.supabase.co; media-src 'self' blob: https://fejklynoerubxjohijyy.supabase.co; base-uri 'none'; form-action 'none'; object-src 'none'
-  Referrer-Policy: no-referrer
+  Content-Security-Policy: default-src 'none'; script-src 'self' https://www.youtube.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://fejklynoerubxjohijyy.supabase.co; media-src 'self' blob: https://fejklynoerubxjohijyy.supabase.co; frame-src https://www.youtube.com; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'
+  Referrer-Policy: strict-origin-when-cross-origin
   X-Content-Type-Options: nosniff
