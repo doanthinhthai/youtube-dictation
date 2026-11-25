@@ -1,3 +1,5 @@
+import { handleLessons } from './lessons.mjs';
+
 const usernamePattern = /^[a-z0-9_]{3,24}$/;
 const invalid = 'Tên đăng nhập hoặc mật khẩu chưa đúng.';
 const unavailable = 'Đăng nhập bằng tên người dùng chưa sẵn sàng. Hãy thử đăng nhập bằng email.';
@@ -106,6 +108,9 @@ export default {
       return config ? json(config) : json({ error: 'Đăng nhập chưa được cấu hình.' }, 503);
     }
     if (url.pathname === '/api/auth/username-login') return usernameLogin(request, url, env, settings(env));
+    if (url.pathname === '/api/lessons' || url.pathname.startsWith('/api/lessons/')) {
+      return handleLessons(request, env, url);
+    }
     return env.ASSETS.fetch(request);
   },
 };
