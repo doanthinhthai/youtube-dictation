@@ -65,7 +65,7 @@ export async function connectAccount(projectUrl, buildKey) {
         auth.session = next;
         auth.onSession?.(next);
         if (event === 'SIGNED_OUT' && previousId) location.reload();
-        if (event === 'SIGNED_IN' && previousId && previousId !== next?.user.id) location.reload();
+        if (event === 'SIGNED_IN' && previousId !== next?.user.id) location.reload();
       });
     } catch {
       auth.client = null;

@@ -1,11 +1,11 @@
 import { projectUrl, publishableKey } from './config.js';
 import { escapeHTML } from './core.js';
 import { connectAccount } from './account.js';
+import { createOnlineSession } from './online-session.js';
 
-const browserState = 'dicta:online:guest';
 const app = document.querySelector('#app');
 const auth = await connectAccount(projectUrl, publishableKey);
-const { client, key } = auth;
+const { client } = auth;
 let session = auth.session;
 auth.onSession = next => { session = next; };
 
@@ -23,32 +23,22 @@ function accountPanel() {
 }
 
 const lessonCache = new Map();
-let persistVersion = Date.now();
-function statePayload(value) {
-  persistVersion = Math.max(persistVersion + 1, Date.now());
-  return { p_value: value, p_revision: persistVersion };
-}
-function getGuestState() {
-  try { return JSON.parse(localStorage.getItem(browserState) || '{}'); }
-  catch { return {}; }
-}
 function requireData(response) {
-  if (response.error) throw new Error('Chưa đọc hoặc lưu được dữ liệu Supabase. Kiểm tra kết nối và schema Dicta Online.');
+  if (response.error) {
+    const error = new Error('Chưa đồng bộ được dữ liệu.');
+    error.code = response.error.code;
+    throw error;
+  }
   return response.data;
 }
 
-async function api(route, { method = 'GET', body } = {}) {
-  if (route === '/api/status') return { online: true, ai: false, translation: false, models: {} };
-  if (route === '/api/storage') return { mode: session ? 'supabase' : 'browser' };
-  if (route === '/api/library') {
-    const base = await samples;
-    if (!session) return base;
+async function readPrivateLessons(owner) {
     const own = [];
     const limit = 100;
     for (let offset = 0; ; offset += limit) {
       const rows = requireData(await client.from('dicta_online_lessons')
-        .select('lesson_id,lesson,audio_path').eq('user_id', session.user.id)
-        .order('lesson_id').range(offset, offset + limit - 1));
+        .select('lesson_id,lesson,audio_path').eq('user_id', owner)
+        .order('lesson_id').range(offset, offset + limit - 1).abortSignal(AbortSignal.timeout(7000)));
       for (const row of rows) {
         if (!row.lesson?.segments?.length) continue;
         const part = ['1','2','3','4'].includes(String(row.lesson.part)) ? String(row.lesson.part) : '3';
@@ -58,20 +48,67 @@ async function api(route, { method = 'GET', body } = {}) {
       }
       if (rows.length < limit) break;
     }
-    return [...base, ...own];
+    return own;
+}
+
+const account = createOnlineSession({
+  accountStorage: localStorage, tabStorage: sessionStorage,
+  getAccountId: () => session?.user.id ?? null,
+  readSamples: () => samples, readPrivateLessons,
+  readRemoteState: async owner => requireData(await client.from('dicta_online_state').select('value')
+    .eq('user_id', owner).abortSignal(AbortSignal.timeout(7000)).maybeSingle())?.value || {},
+  sendChanges: async (changes, owner) => {
+    if (owner !== session?.user.id) return [];
+    const accessToken = session.access_token;
+    const response = await fetch(projectUrl + '/rest/v1/rpc/dicta_online_apply_progress', {
+      method: 'POST', signal: AbortSignal.timeout(10000),
+      headers: { apikey: auth.key, Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_changes: changes }),
+    });
+    if (!response.ok) throw new Error('Chưa đồng bộ được tiến độ.');
+    return response.json();
+  },
+});
+
+let storageStatus = 'ready';
+let readsDegraded = false;
+let retryTimer;
+function bannerHTML() {
+  const sync = storageStatus === 'degraded'
+    ? '<p class="notice" role="status">Đồng bộ đang gián đoạn. Tiến độ mới được giữ trên thiết bị. <button class="text-btn" data-action="retry-online">Thử lại</button></p>' : '';
+  const guest = account.shouldOfferGuestImport()
+    ? '<div class="notice"><p>Bạn muốn nhập tiến độ đã luyện trong tab này vào tài khoản?</p><button class="btn secondary" data-action="import-guest">Nhập tiến độ</button> <button class="text-btn" data-action="decline-guest">Bỏ qua</button></div>' : '';
+  return sync + guest;
+}
+
+function renderStatus() {
+  const target = document.querySelector('#online-status');
+  if (target) target.innerHTML = bannerHTML();
+}
+
+async function flush() {
+  clearTimeout(retryTimer);
+  if (!session || !account.hasPending()) return;
+  if (await account.flushProgress()) {
+    storageStatus = readsDegraded ? 'degraded' : 'ready';
+    renderStatus();
+  } else {
+    storageStatus = 'degraded';
+    renderStatus();
   }
-  if (route === '/api/state' && method === 'GET') {
-    if (!session) return getGuestState();
-    const row = requireData(await client.from('dicta_online_state').select('value,revision')
-      .eq('user_id', session.user.id).maybeSingle());
-    persistVersion = Math.max(persistVersion, Number(row?.revision || 0));
-    return row?.value || {};
-  }
-  if (route === '/api/state' && method === 'PUT') {
-    if (session) requireData(await client.rpc('dicta_online_save_state', statePayload(JSON.parse(body))));
-    else localStorage.setItem(browserState, body);
-    return { ok: true };
-  }
+  if (account.hasPending()) retryTimer = setTimeout(flush, 10000);
+}
+
+function recordState(state, delay = 1500) {
+  if (!account.recordState(state) || !session || !account.hasPending()) return;
+  clearTimeout(retryTimer);
+  retryTimer = setTimeout(flush, delay);
+}
+
+async function api(route) {
+  if (route === '/api/status') return { online: true, ai: false, translation: false, models: {} };
+  if (route === '/api/storage') return { mode: session ? 'supabase' : 'browser' };
+  if (route === '/api/library') return session ? [...await samples, ...await readPrivateLessons(session.user.id)] : samples;
   throw new Error('Tạo và sửa bài nghe trong Dicta trên PC.');
 }
 
@@ -101,25 +138,34 @@ async function prepareMedia(lesson) {
   return url;
 }
 
-function flushState(value) {
-  if (!session) {
-    localStorage.setItem(browserState, JSON.stringify(value));
-    return;
-  }
-  const body = JSON.stringify(statePayload(value));
-  if (new TextEncoder().encode(body).length > 60000) return;
-  fetch(projectUrl + '/rest/v1/rpc/dicta_online_save_state', {
-    method: 'POST', keepalive: true,
-    headers: { apikey: key, Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
-    body,
-  }).catch(() => {});
-}
-
 globalThis.dictaOnline = {
-  api, accountPanel, showAccount: () => auth.show(), prepareMedia, flushState,
+  api, accountPanel, showAccount: () => auth.show(), prepareMedia, recordState, bannerHTML,
+  setBaseline: account.setBaseline,
+  async loadOnlineSession() {
+    const data = await account.loadOnlineSession();
+    readsDegraded = data.status === 'degraded';
+    storageStatus = data.status;
+    void flush();
+    return data;
+  },
+  async importGuestProgress() {
+    const saved = await account.importGuestProgress();
+    if (saved) location.reload();
+    else {
+      storageStatus = 'degraded';
+      renderStatus();
+      retryTimer = setTimeout(flush, 10000);
+    }
+  },
+  declineGuestImport() { account.declineGuestImport(); renderStatus(); },
+  async retry() {
+    await flush();
+    location.reload();
+  },
   accountLabel: session ? 'Tài khoản' : 'Đăng nhập',
   storageLabel: session ? 'Online · Đã đăng nhập' : 'Online · Luyện bài mẫu',
 };
+window.addEventListener('online', flush);
 app.classList.add('online-mode');
 await import('./app.js');
 auth.finishCallback();
